@@ -9,6 +9,7 @@ struct BRDF {
 
 #define MIN_REFLECTIVITY 0.04
 
+//The reflectivity of nonmetals varies, but is about 0.04 on average.this function that adjusts the OneMinusReflectivity range from 0–1 to 0–0.96
 float OneMinusReflectivity (float metallic) {
 	float range = 1.0 - MIN_REFLECTIVITY;
 	return range - metallic * range;
@@ -18,12 +19,13 @@ BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	BRDF brdf;
 	float oneMinusReflectivity = OneMinusReflectivity(surface.metallic);
 
-	brdf.diffuse = surface.color * oneMinusReflectivity;
-	if (applyAlphaToDiffuse) {
+	brdf.diffuse = surface.color * oneMinusReflectivity;   //金属漫反射较少
+	if (applyAlphaToDiffuse) {   // 		当为true时，主要为了半透明的物体，即漫反射部分穿过，高光不穿过。当为false时，为透明物体使用，此时高光和漫反射都为部分穿过，剩余反射。
 		brdf.diffuse *= surface.alpha;
 	}
 	brdf.specular = lerp(MIN_REFLECTIVITY, surface.color, surface.metallic);
 
+	//likely   Roughness is the opposite of smoothness, so we can simply take one minus smoothness.
 	float perceptualRoughness =
 		PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
 	brdf.roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
